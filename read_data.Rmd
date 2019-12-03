@@ -46,10 +46,9 @@ for (i in 2:length(links_2018))
 {
 X <- read.csv(url(links_2018[i]))
 n <- sample(1:nrow(X), 5000, replace = F)%>%sort()
-
 total <- rbind(total,X[n,])
-
 }
+
 rownames(total)<-1:nrow(total)
 
 ```
