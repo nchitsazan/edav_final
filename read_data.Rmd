@@ -1,0 +1,63 @@
+---
+title: "data_read"
+author: "Nima"
+date: "11/20/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(tidyverse)
+library(rvest)
+library(robotstxt)
+library(XML)
+library(xml2)
+library(rvest)
+library(xlsx)
+
+
+url <- "https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page"
+bool <- paths_allowed(url)
+
+df = read_html(url)
+nodes = html_nodes(df, ".faq-answers a")
+links = paste(html_attr(nodes, "href"), sep='') #read all links
+links_2018 <- links[grepl("green_tripdata_2018", links)] #filter green taxi 2018
+```
+
+
+```{r}
+
+X = read.csv(url(links_2018[1]))
+n <- sample(1:nrow(X), 5000, replace = F)%>%sort()
+
+total = X[n,]
+
+for (i in 2:length(links_2018))
+{
+X <- read.csv(url(links_2018[i]))
+n <- sample(1:nrow(X), 5000, replace = F)%>%sort()
+
+total <- rbind(total,X[n,])
+
+}
+rownames(total)<-1:nrow(total)
+
+```
+
+
+
+
+
+
+
+

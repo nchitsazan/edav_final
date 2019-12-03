@@ -1,0 +1,155 @@
+---
+title: "EDAV Fall 2019- Final Project"
+output: html_document
+author: "Foad Khoshouei- fk2377, Nima Chitsazan nc2806 "
+---
+
+
+```{r setup, include=FALSE}
+ # keep this chunk in your .Rmd file
+ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(choroplethr)
+library(rvest)
+library(robotstxt)
+library(XML)
+library(xml2)
+library(rvest)
+library(xlsx)
+```
+
+
+```{r}
+#Loading data from the website
+url <- "https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page"
+bool <- paths_allowed(url)
+
+df = read_html(url)
+nodes = html_nodes(df, ".faq-answers a")
+links = paste(html_attr(nodes, "href"), sep='') #read all links
+links_2018 <- links[grepl("green_tripdata_2018", links)] #filter green taxi 2018
+n <- sample(1:nrow(X), 5000, replace = F)%>%sort()
+X = read.csv(url(links_2018[1]))
+total = X[n,]
+
+for (i in 2:length(links_2018))
+{
+X <- read.csv(url(links_2018[i]))
+n <- sample(1:nrow(X), 5000, replace = F)%>%sort()
+
+total <- rbind(total,X[n,])
+
+}
+rownames(total)<-1:nrow(total)
+
+```
+
+
+
+```{r}
+
+#reading the data
+
+#path="green_tripdata_2019-06.csv"
+#df<- read.csv(file=path, header=TRUE, sep=",")
+load("sample_green_2018.Rda")
+df<-total
+```
+
+```{r}
+#cleaning the data- removing negative fares and outliers 
+#fence is 1.5 times q4-q2 plus q4
+q<-quantile(df$fare_amount)
+up=q[4]+1.5*(q[4]-q[2])
+df<-df[!(df$fare_amount<=0 | df$fare_amount>up),]
+
+```
+
+
+
+
+```{r}
+#removing outliers and negative tips
+q<-quantile(df$tip_amount)
+up=q[4]+1.5*(q[4]-q[2])
+df<-df[!(df$tip_amount< 0 | df$tip_amount>up),]
+```
+
+```{r}
+#replacing zero tips with NA for cash payments
+df$tip_amount[df$tip_amount == 0 & df$payment_type!=1] <- NA 
+```
+
+
+```{r}
+
+#sub-sampling the data
+#set.seed(6)
+#sample_size= 60000
+#n= sample(1:nrow(df), sample_size, replace= FALSE)
+#n<- sort(n)
+#df_sub<- df[n,]
+#rownames(df_sub)<- 1:sample_size
+
+```
+
+```{r}
+df<- df %>% 
+          mutate(tip_percent = 100*tip_amount/fare_amount);
+```
+
+
+```{r}
+ggplot(data = df) +
+  geom_histogram(mapping = aes(fare_amount), fill='lightblue')+
+  #scale_x_continuous(breaks=seq(0,20,5))+
+  ggtitle("Histogram of Fare Amount")
+```
+
+
+```{r}
+
+ggplot(data = df) +
+  geom_histogram(mapping = aes(tip_percent), fill='lightblue')+
+  #scale_x_continuous(breaks=seq(0,20,5))+
+  ggtitle("Histogram of Tip Percent")
+
+```
+
+```{r}
+ggplot(data = df) +
+  geom_histogram(mapping = aes(trip_distance), fill='lightblue')+
+  #scale_x_continuous(breaks=seq(0,20,5))+
+  ggtitle("Histogram of Trip Distance")
+
+```
+
+```{r}
+ggplot(df, aes(trip_distance, fare_amount)) +
+  geom_point() +
+  ggtitle("Fare vs Trip Distance")+
+  xlab("Trip Distance- miles")+
+  ylab("Fare Amount- USD")
+
+```
+
+```{r}
+ggplot(df, aes(fare_amount, tip_percent)) +
+  geom_point() +
+  ggtitle("")
+```
+
+```{r}
+nyc_fips = c(36005, 36047, 36061, 36081, 36085)
+zip_choropleth(,
+county_zoom = nyc_fips,
+title = "Density of pick-ups",
+legend = "")
+
+```
+
